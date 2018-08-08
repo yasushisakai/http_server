@@ -6,7 +6,6 @@ pub struct ThreadPool {
     sender: mpsc::Sender<Message>,
 }
 
-
 impl ThreadPool {
     pub fn new(s: usize) ->ThreadPool {
         assert!(s > 0);
