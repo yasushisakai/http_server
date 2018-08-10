@@ -11,7 +11,6 @@ pub fn curl_get(url: &str) -> Vec<u8> {
 }
 
 fn make_header(status_line: &[u8]) -> Vec<u8> {
-    let ok_status = b"HTTP/1.1 200 OK\r\n";
     let mut header: Vec<u8> = Vec::new();
     header.extend_from_slice(&status_line);
     header

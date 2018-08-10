@@ -66,10 +66,13 @@ fn handle_connection(mut stream: TcpStream, state: Arc<Mutex<State>>){
     } else if buffer.starts_with(send_pixels) {
         // convert buffer to string    
         let buffer = String::from_utf8(buffer.to_vec()).unwrap();
-        let re = Regex::new(r"(send/)(?P<value>[0-9]{3})").unwrap();
+        let re = Regex::new(r"(send/)(?P<value>[0-9]{1,3})").unwrap();
+        // let re = Regex::new(r"(send/)(?P<value>[^ /]*)").unwrap();
         let caps = re.captures(&buffer).unwrap();
         println!("{}", &caps["value"]);
 
+        let mut state_locked = state.lock().unwrap();
+        state_locked.increment_in();
         // FIXME: only giving hello 
         response = helper::make_ok_header();
         let contents = fs::read("hello.html").unwrap();
@@ -90,7 +93,8 @@ fn handle_connection(mut stream: TcpStream, state: Arc<Mutex<State>>){
     } else if buffer.starts_with(get_pixels) {
         // FIXME: just sending the status here
         response = helper::make_json_header();
-        let state_locked = state.lock().unwrap();
+        let mut state_locked = state.lock().unwrap();
+        state_locked.increment_out();
         let contents = serde_json::to_vec(&*state_locked).unwrap();
         response.extend(contents);
     } else if buffer.starts_with(start) {
