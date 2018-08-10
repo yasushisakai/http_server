@@ -1,5 +1,6 @@
 extern crate http_server;
 extern crate regex;
+extern crate image;
 #[macro_use]
 extern crate serde_derive;
 extern crate serde_json;
@@ -14,6 +15,7 @@ use http_server::ThreadPool;
 
 mod state;
 mod helper;
+mod color_table;
 
 use state::State; 
 
@@ -69,13 +71,18 @@ fn handle_connection(mut stream: TcpStream, state: Arc<Mutex<State>>){
         let re = Regex::new(r"(send/)(?P<value>[0-9]{1,3})").unwrap();
         // let re = Regex::new(r"(send/)(?P<value>[^ /]*)").unwrap();
         let caps = re.captures(&buffer).unwrap();
-        println!("{}", &caps["value"]);
-
+        // println!("{}", &caps["value"]);
         let mut state_locked = state.lock().unwrap();
-        state_locked.increment_in();
-        // FIXME: only giving hello 
-        response = helper::make_ok_header();
-        let contents = fs::read("hello.html").unwrap();
+
+        match state_locked.byte_in(parse_value){
+            Ok(()) => (),
+            Err(err) => {
+                println!("Error: pushing byte {}", err)
+            }
+        }
+
+        let contents = serde_json::to_vec(&*state_locked).unwrap();
+        response = helper::make_json_header();
         response.extend(contents);
         
     } else if buffer.starts_with(image_original) {
@@ -91,10 +98,20 @@ fn handle_connection(mut stream: TcpStream, state: Arc<Mutex<State>>){
         response = helper::make_image_header(length);
         response.extend(contents);
     } else if buffer.starts_with(get_pixels) {
-        // FIXME: just sending the status here
         response = helper::make_json_header();
         let mut state_locked = state.lock().unwrap();
-        state_locked.increment_out();
+        match state_locked.byte_out() {
+            Ok(v) => {
+                let d = color_table::Data::new(state_locked.cnt_out, v)
+                let contents = serde_json::to_vec(&*d).unwrap();
+                response.extend(contents);
+            },
+            Err(err) => {
+                println!("Error retriving next value {}", err);
+                let contents = serde_derive::to_vec(&*state_locked).unwrap();
+                response.extend(contents);
+            }
+        }
         let contents = serde_json::to_vec(&*state_locked).unwrap();
         response.extend(contents);
     } else if buffer.starts_with(start) {
