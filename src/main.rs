@@ -21,7 +21,7 @@ mod color_table;
 use state::State; 
 
 fn main (){
-    let listener = TcpListener::bind("127.0.0.1:7878").unwrap();
+    let listener = TcpListener::bind("127.0.0.1:5678").unwrap();
     let pool = ThreadPool::new(10);
 
     let mut state = Arc::new(Mutex::new(State::new()));
