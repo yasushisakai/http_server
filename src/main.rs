@@ -24,7 +24,7 @@ fn main (){
     let listener = TcpListener::bind("127.0.0.1:5678").unwrap();
     let pool = ThreadPool::new(10);
 
-    let image_file_name = "line_small.png";
+    let image_file_name = "image.png";
 
     let mut state = Arc::new(Mutex::new(State::new(&image_file_name)));
 

@@ -67,21 +67,17 @@ impl State {
 
     pub fn byte_in (&mut self, v: u8) -> Result<(), &'static str>{ 
         if self.is_running {
-            self.cnt_in = self.cnt_in % self.image_bytes.len();
+            self.cnt_in = self.cnt_in % (16 * 3);
             self.image_bytes[self.cnt_in] = v;
 
             let dt = Local::now();
             let log_line = format!("{}, in, {}, {}", dt.format("%s"),&self.cnt_in,&v);
             log(&log_line);
             println!("[{}] in:{}, {}",dt.format("%Y %m %d %H:%M:%S"),&self.cnt_in,&v);
-
             if self.last_update.elapsed().unwrap() > Duration::from_secs(60 * 3) {
                 self.last_update = SystemTime::now();
                 save_as_image(self.image_bytes.as_ref(), self.width, self.height);
             }
-            // let time_since = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
-            // let log_in = format!("{},in,{},{}", time_since.as_secs(), self.cnt_in, v);
-            // log(log_in);
             self.increment_in();
             Ok(())
         } else {
@@ -91,7 +87,7 @@ impl State {
 
     pub fn byte_out (&mut self) -> Result<u8, &'static str> {
         if self.is_running {
-            self.cnt_in = self.cnt_in % self.image_bytes.len();
+            self.cnt_in = self.cnt_in % (16 * 3);
             let v = self.image_bytes[self.cnt_out];
             
             let dt = Local::now();
