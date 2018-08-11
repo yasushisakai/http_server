@@ -11,17 +11,18 @@ pub struct State {
     height: u32,
     pub cnt_out: usize,
     pub cnt_in: usize,
+    pub file_name: String,
     #[serde(skip_serializing)]
     image_bytes: Vec<u8>,
 }
 
 impl State {
-   pub fn new () -> State {
+   pub fn new (filename: &str) -> State {
 
-       let img = match image::open("current.png") {
+       let img = match image::open("current") {
             Ok(img) => img,
             Err(_e) => {
-                image::open("image.png").expect("Error: couldn't open image.png")
+                image::open(filename).expect("Error: couldn't open image.png")
             }
         };
 
@@ -38,6 +39,7 @@ impl State {
         height: h,
         cnt_out: 0,
         cnt_in: 0,
+        file_name: filename.to_string(),
         image_bytes: bytes,
      }
    }
@@ -93,12 +95,11 @@ impl State {
             let v = self.image_bytes[self.cnt_out];
             
             let dt = Local::now();
-            let log_line = format!("{},out, {}, {}", dt.format("%s"),&self.cnt_in,&v);
+            let log_line = format!("{},out, {}, {}", dt.format("%s"),&self.cnt_out,&v);
             log(&log_line);
-            println!("[{}]out:{}, {}",dt.format("%Y %m %d %H:%M:%S"),&self.cnt_in,&v);
+            println!("[{}]out:{}, {}",dt.format("%Y %m %d %H:%M:%S"),&self.cnt_out,&v);
             
             self.increment_out();
-
             Ok(v)
         } else {
             Err("cannot give you byte, state is not running")

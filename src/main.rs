@@ -24,7 +24,9 @@ fn main (){
     let listener = TcpListener::bind("127.0.0.1:5678").unwrap();
     let pool = ThreadPool::new(10);
 
-    let mut state = Arc::new(Mutex::new(State::new()));
+    let image_file_name = "line_small.png";
+
+    let mut state = Arc::new(Mutex::new(State::new(&image_file_name)));
 
     for stream in listener.incoming() {
         let stream = stream.unwrap(); 
@@ -90,13 +92,15 @@ fn handle_connection(mut stream: TcpStream, state: Arc<Mutex<State>>){
         response.extend(contents);
         
     } else if buffer.starts_with(image_original) {
-        let contents = fs::read("image.png").expect("Error opening image.png");
+        let state_locked = state.lock().unwrap();
+        let contents = fs::read(&state_locked.file_name).expect("Error opening image.png");
         let length = contents.len();
         response = helper::make_image_header(length);
         response.extend(contents);
     } else if buffer.starts_with(image_current) {
         let contents = fs::read("current.png").unwrap_or_else(|_|{
-            fs::read("image.png").unwrap()
+        let state_locked = state.lock().unwrap();
+            fs::read(&state_locked.file_name).unwrap()
         });
         let length = contents.len();
         response = helper::make_image_header(length);
