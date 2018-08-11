@@ -73,7 +73,7 @@ impl State {
             log(&log_line);
             println!("[{}] in:{}, {}",dt.format("%Y %m %d %H:%M:%S"),&self.cnt_in,&v);
 
-            if self.last_update.elapsed().unwrap() > Duration::from_secs(15) {
+            if self.last_update.elapsed().unwrap() > Duration::from_secs(60 * 3) {
                 self.last_update = SystemTime::now();
                 save_as_image(self.image_bytes.as_ref(), self.width, self.height);
             }
