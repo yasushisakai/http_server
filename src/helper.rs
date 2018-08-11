@@ -1,7 +1,7 @@
 use std::process::Command;
-use std::time::SystemTime;
-use image::DynamicImage;
-use super::color_table::ColorTable;
+use std::time::{UNIX_EPOCH, SystemTime};
+use image::{ImageBuffer, ImageRgb8, Rgb, RgbImage};
+use super::color_table::{Color, ColorTable};
 
 pub fn curl_get(url: &str) -> Vec<u8> {
 
@@ -55,7 +55,7 @@ pub fn make_image_header(size: usize) -> Vec<u8> {
     end_header(header)
 }
 
-pub fn covert_to_bytes(img: &DynamicImage) -> Vec<u8> {
+pub fn convert_to_bytes(img: &RgbImage) -> Vec<u8> {
     // assuming its 16 colors 1111
     let mut ct = ColorTable::new();
 
@@ -90,41 +90,45 @@ pub fn covert_to_bytes(img: &DynamicImage) -> Vec<u8> {
     overall
 }
 
-pub fn save_as_image(bytes: Vec<u8>, width: u32, height: u32) -> DynamicImage{
-    let mut imgbuf = image::ImageBuffer::new(width, height);
+pub fn save_as_image(bytes: &[u8], width: u32, height: u32) {
+    let mut imgbuf = RgbImage::new(width, height);
     // again assuming that this is 16 colors
     // color header will be 16 * 3 = 48 bytes
     let header_length = 16 * 3;
 
-    let table_bytes = bytes[0..header_length];
-    let ct = ColorTable::from_file_header(table_bytes);
+    let table_bytes = &bytes[0..header_length];
+    let ct = ColorTable::from_file_header(table_bytes.to_vec());
 
-    let pixel_bytes = bytes[header_length..]
+    let pixel_bytes = &bytes[header_length..];
     // each pixel is saved like following
     // 00001111
     let mut count = 0;
 
     for b in pixel_bytes {
-        let zero = ct.get(b >> 4).to_rgb(); // left shift 4;
-        let one = ct.get(b & 15).to_rgb(); // only the the last 4; like as u4
+        let zero = ct.get(b >> 4).to_u8(); // left shift 4;
+        let zero_pixel = Rgb(zero);
+        let one = ct.get(b & 15).to_u8(); // only the the last 4; like as u4
+        let one_pixel = Rgb(one);
 
-        let (x, y) = index_to_pos(count * 2, height)
-        imgbuf.set_pixel(x, y, zero);
-        let (x, y) = index_to_pos(count * 2 + 1, height)
-        imgbuf.set_pixel(x, y, one);
+        let (x, y) = index_to_pos(count * 2, height);
+        imgbuf.put_pixel(x as u32, y as u32, zero_pixel) ;
+        let (x, y) = index_to_pos(count * 2 + 1, height);
+        imgbuf.put_pixel(x as u32, y as u32, one_pixel) ;
 
         count += 1;
     }
 
-    image::ImageRgb8(imgbuf).save("current.png").unwrap();
-    let temp_file_name = format!("archive_{}.png",SystemTime::now().secs_since_epoch);
-    image::ImageRgb8(imgbuf).save()
+    ImageRgb8(imgbuf.clone()).save("current.png").unwrap();
+    let temp_file_name = format!("archive_{}.png",SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_secs());
+    ImageRgb8(imgbuf).save(temp_file_name).unwrap();
     println!("saved image");
 }
 
-fn index_to_pos (i: usize, mod_value:usize) -> (usize, usize) {
-    let x = i / mod_value; // height
-    let y = i % mod_value; 
+fn index_to_pos (i: usize, mod_value:u32) -> (usize, usize) {
+    let index = i as u32;
+
+    let x = (index / mod_value) as usize;// height
+    let y = (index % mod_value) as usize; 
 
     (x, y)
 }

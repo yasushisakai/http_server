@@ -74,7 +74,7 @@ fn handle_connection(mut stream: TcpStream, state: Arc<Mutex<State>>){
         // println!("{}", &caps["value"]);
         let mut state_locked = state.lock().unwrap();
 
-        match state_locked.byte_in(parse_value){
+        match state_locked.byte_in(caps["value"].parse::<u8>().unwrap()){
             Ok(()) => (),
             Err(err) => {
                 println!("Error: pushing byte {}", err)
@@ -102,13 +102,13 @@ fn handle_connection(mut stream: TcpStream, state: Arc<Mutex<State>>){
         let mut state_locked = state.lock().unwrap();
         match state_locked.byte_out() {
             Ok(v) => {
-                let d = color_table::Data::new(state_locked.cnt_out, v)
-                let contents = serde_json::to_vec(&*d).unwrap();
+                let d = color_table::Data::new(state_locked.cnt_out as u8, v);
+                let contents = serde_json::to_vec(&d).unwrap();
                 response.extend(contents);
             },
             Err(err) => {
                 println!("Error retriving next value {}", err);
-                let contents = serde_derive::to_vec(&*state_locked).unwrap();
+                let contents = serde_json::to_vec(&*state_locked).unwrap();
                 response.extend(contents);
             }
         }
@@ -142,7 +142,4 @@ fn handle_connection(mut stream: TcpStream, state: Arc<Mutex<State>>){
     stream.flush().unwrap();
     
 }
-
-
-
 

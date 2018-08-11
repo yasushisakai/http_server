@@ -1,5 +1,3 @@
-use image::Rgb;
-
 pub struct ColorTable {
     colors: Vec<Color>
 }
@@ -16,7 +14,7 @@ impl ColorTable {
         for i in 0..bytes.len()/3 {
             let index = i * 3;
             let c = Color::new(bytes[index],bytes[index + 1],bytes[index + 2]);
-            ct.push(&c);
+            ct.push(c);
         }
         ct
     }
@@ -41,7 +39,7 @@ impl ColorTable {
         self.colors.push(new_color);
     }
 
-    pub fn push_if_unique(&mut self, new_color:&Color) -> u8 {
+    pub fn push_if_unique(&mut self, new_color:Color) -> u8 {
         let is_unique = self.has(&new_color);
 
         match is_unique {
@@ -67,27 +65,27 @@ impl ColorTable {
 }
 
 #[derive(Debug, Eq, PartialEq, Copy, Clone)]
-struct Color (u8, u8, u8);
+pub struct Color (u8, u8, u8);
 
 impl Color {
     pub fn new (r:u8, g:u8, b:u8) -> Color {
-        Color(r, g, b);
+        Color(r, g, b)
     }
 
     pub fn to_u8(&self) -> [u8;3] {
         [self.0, self.1, self.2]
     }
 
-    pub fn to_rgb(&self) -> Rgb {
-        let byte_arry = self.to_u8();
-        Rgb(byte_arry)
-    }
+   //  pub fn to_rgb(&self) -> Rgb {
+   //      Rgb([self.0, self.1, self.2])
+   //  }
+
 }
 
-#[derive(Debug, Deserialize)]
-struct Data { 
-    index: u8;
-    value: u8;
+#[derive(Debug, Serialize)]
+pub struct Data { 
+    index: u8,
+    value: u8,
 }
 
 impl Data {
