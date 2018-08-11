@@ -22,7 +22,7 @@ use state::State;
 
 fn main (){
     let listener = TcpListener::bind("127.0.0.1:5678").unwrap();
-    let pool = ThreadPool::new(10);
+    let pool = ThreadPool::new(20);
 
     let image_file_name = "image.png";
 
