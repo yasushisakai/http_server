@@ -76,10 +76,6 @@ impl Color {
         [self.0, self.1, self.2]
     }
 
-   //  pub fn to_rgb(&self) -> Rgb {
-   //      Rgb([self.0, self.1, self.2])
-   //  }
-
 }
 
 #[derive(Debug, Serialize)]

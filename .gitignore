@@ -1,2 +1,4 @@
 /target
 **/*.rs.bk
+archive*.png
+current.png

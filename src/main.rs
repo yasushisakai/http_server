@@ -1,6 +1,7 @@
 extern crate http_server;
 extern crate regex;
 extern crate image;
+extern crate chrono;
 #[macro_use]
 extern crate serde_derive;
 extern crate serde_json;
@@ -25,8 +26,6 @@ fn main (){
 
     let mut state = Arc::new(Mutex::new(State::new()));
 
-    // println!("{:?}", view.get_status());
-
     for stream in listener.incoming() {
         let stream = stream.unwrap(); 
         let state = Arc::clone(&state);
@@ -41,10 +40,8 @@ fn handle_connection(mut stream: TcpStream, state: Arc<Mutex<State>>){
     let mut buffer = [0; 512]; // 512 bytes
     stream.read(&mut buffer).unwrap(); 
 
-    println!("Request: {}", String::from_utf8_lossy(&buffer));
-
     let home = b"GET /talkingdrums/ HTTP/1.1\r\n";
-    let status_json = b"GET /talkingdrums/status HTTP/1.1\r\n";
+    let status_json = b"GET /talkingdrums/status/ HTTP/1.1\r\n";
     let send_pixels = b"GET /talkingdrums/image/send/";
     let image_original = b"GET /talkingdrums/image/original/ HTTP/1.1\r\n";
     let image_current = b"GET /talkingdrums/image/current/ HTTP/1.1\r\n";
@@ -52,12 +49,12 @@ fn handle_connection(mut stream: TcpStream, state: Arc<Mutex<State>>){
     let start = b"GET /talkingdrums/image/start/ HTTP/1.1\r\n";
     let stop = b"GET /talkingdrums/image/stop/ HTTP/1.1\r\n";
     let reset = b"GET /talkingdrums/image/reset/ HTTP/1.1\r\n";
-    let update = b"GET /talkingdrums/image/update/ HTTP/1.1\r\n";
   
     let mut response: Vec<u8> = Vec::new();
     
     if buffer.starts_with(home){
         response = helper::make_ok_header();
+        response.extend(b"\r\n");
         let contents = fs::read("hello.html").unwrap();
         response.extend(contents);
     } else if buffer.starts_with(status_json) {
@@ -68,20 +65,27 @@ fn handle_connection(mut stream: TcpStream, state: Arc<Mutex<State>>){
     } else if buffer.starts_with(send_pixels) {
         // convert buffer to string    
         let buffer = String::from_utf8(buffer.to_vec()).unwrap();
-        let re = Regex::new(r"(send/)(?P<value>[0-9]{1,3})").unwrap();
+        let re = Regex::new(r"(send/)(?P<value>[0-9]{1,3})").expect("Error creating regex string");
         // let re = Regex::new(r"(send/)(?P<value>[^ /]*)").unwrap();
-        let caps = re.captures(&buffer).unwrap();
-        // println!("{}", &caps["value"]);
-        let mut state_locked = state.lock().unwrap();
+        let caps = re.captures(&buffer)
+            .expect("Error captureing regex");
+        let mut state_locked = state.lock().expect(
+            "Error locking state");
 
-        match state_locked.byte_in(caps["value"].parse::<u8>().unwrap()){
+        let value = caps["value"].parse::<u32>()
+            .expect("Error parsing request string to u8");
+
+        let value = value as u8;
+
+        match state_locked.byte_in(value){
             Ok(()) => (),
             Err(err) => {
                 println!("Error: pushing byte {}", err)
             }
         }
 
-        let contents = serde_json::to_vec(&*state_locked).unwrap();
+        let contents = serde_json::to_vec(&*state_locked)
+            .expect("Error converting to json");
         response = helper::make_json_header();
         response.extend(contents);
         
@@ -112,8 +116,8 @@ fn handle_connection(mut stream: TcpStream, state: Arc<Mutex<State>>){
                 response.extend(contents);
             }
         }
-        let contents = serde_json::to_vec(&*state_locked).unwrap();
-        response.extend(contents);
+        // let contents = serde_json::to_vec(&*state_locked).unwrap();
+        // response.extend(contents);
     } else if buffer.starts_with(start) {
         response = helper::make_json_header();
         let mut state_locked = state.lock().unwrap();

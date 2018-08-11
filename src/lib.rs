@@ -85,7 +85,7 @@ impl Worker {
             let message = receiver.lock().unwrap().recv().unwrap();
             match message {
                     Message::NewJob(job) => {
-                    println!("worker {} go a job; executing.", id);
+                    // println!("worker: {}", id);
                     job.call_box();
                     },
                     Message::Terminate => {

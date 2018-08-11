@@ -1,4 +1,5 @@
 use image;
+use chrono::prelude::*;
 use std::time::{Duration, SystemTime, UNIX_EPOCH}; 
 use super::helper::{convert_to_bytes, log, save_as_image};
 
@@ -10,6 +11,7 @@ pub struct State {
     height: u32,
     pub cnt_out: usize,
     pub cnt_in: usize,
+    #[serde(skip_serializing)]
     image_bytes: Vec<u8>,
 }
 
@@ -65,15 +67,20 @@ impl State {
         if self.is_running {
             self.cnt_in = self.cnt_in % self.image_bytes.len();
             self.image_bytes[self.cnt_in] = v;
-            self.increment_in();
-            
-            if self.last_update.elapsed().unwrap() > Duration::from_secs(60) {
-                    self.last_update = SystemTime::now();
-                    save_as_image(self.image_bytes.as_ref(), self.width, self.height);
+
+            let dt = Local::now();
+            let log_line = format!("{}, in, {}, {}", dt.format("%s"),&self.cnt_in,&v);
+            log(&log_line);
+            println!("[{}] in:{}, {}",dt.format("%Y %m %d %H:%M:%S"),&self.cnt_in,&v);
+
+            if self.last_update.elapsed().unwrap() > Duration::from_secs(15) {
+                self.last_update = SystemTime::now();
+                save_as_image(self.image_bytes.as_ref(), self.width, self.height);
             }
-            let time_since = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
-            let log_in = format!("{},in,{},{}", time_since.as_secs(), self.cnt_in, v);
-            log(log_in);
+            // let time_since = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
+            // let log_in = format!("{},in,{},{}", time_since.as_secs(), self.cnt_in, v);
+            // log(log_in);
+            self.increment_in();
             Ok(())
         } else {
             Err("cannot take any bytes, state is not running")
@@ -84,10 +91,14 @@ impl State {
         if self.is_running {
             self.cnt_in = self.cnt_in % self.image_bytes.len();
             let v = self.image_bytes[self.cnt_out];
+            
+            let dt = Local::now();
+            let log_line = format!("{},out, {}, {}", dt.format("%s"),&self.cnt_in,&v);
+            log(&log_line);
+            println!("[{}]out:{}, {}",dt.format("%Y %m %d %H:%M:%S"),&self.cnt_in,&v);
+            
             self.increment_out();
-            let now = SystemTime::now().duration_since(UNIX_EPOCH).unwrap();
-            let log_out = format!("{}, out, {}, {}", now.as_secs(), self.cnt_out,v);
-            log(log_out);
+
             Ok(v)
         } else {
             Err("cannot give you byte, state is not running")

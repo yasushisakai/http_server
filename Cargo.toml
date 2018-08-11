@@ -5,6 +5,7 @@ authors = ["Yasushi Sakai <ysshski@gmail.com>"]
 
 [dependencies]
 image="*"
+chrono="0.4"
 regex="1"
 serde="1.0"
 serde_derive="1.0"

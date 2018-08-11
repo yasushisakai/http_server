@@ -2,6 +2,8 @@ use std::process::Command;
 use std::time::{UNIX_EPOCH, SystemTime};
 use image::{ImageBuffer, ImageRgb8, Rgb, RgbImage};
 use super::color_table::{Color, ColorTable};
+use std::fs::OpenOptions;
+use std::io::prelude::*;
 
 pub fn curl_get(url: &str) -> Vec<u8> {
 
@@ -22,7 +24,7 @@ fn make_header(status_line: &[u8]) -> Vec<u8> {
 pub fn make_ok_header() -> Vec<u8> {
     let ok_status = b"HTTP/1.1 200 OK\r\n";
     let header = make_header(ok_status);
-    end_header(header)
+    header
 }
 
 pub fn end_header(header: Vec<u8>) -> Vec<u8> {
@@ -133,7 +135,16 @@ fn index_to_pos (i: usize, mod_value:u32) -> (usize, usize) {
     (x, y)
 }
 
-pub fn log(new_line: String) {
-    // IMPLEMENT log    
+pub fn log(new_line: &str) {
+    let mut file = OpenOptions::new()
+        .write(true)
+        .append(true)
+        .open("log.csv")
+        .unwrap();
+
+    if let Err(e) = writeln!(file,"{}", new_line ) {
+        eprintln!("Error: can't write to file: {}", e);
+    }
+     
 }
 
