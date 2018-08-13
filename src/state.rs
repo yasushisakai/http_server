@@ -62,7 +62,7 @@ impl State {
     }
 
     pub fn increment_out(&mut self){
-        self.cnt_out +=1;
+            self.cnt_out += 1;
     }
 
     pub fn byte_in (&mut self, v: u8) -> Result<(), &'static str>{ 
@@ -87,7 +87,7 @@ impl State {
 
     pub fn byte_out (&mut self) -> Result<u8, &'static str> {
         if self.is_running {
-            self.cnt_in = self.cnt_in % (16 * 3);
+            self.cnt_out = self.cnt_out % (16 * 3);
             let v = self.image_bytes[self.cnt_out];
             
             let dt = Local::now();
