@@ -2,3 +2,5 @@
 **/*.rs.bk
 archive*.png
 current.png
+
+backups/

@@ -15,5 +15,26 @@
     <img class="sharp" src="image/original/" width=500>
     <h1>current</h1>
     <img class="sharp" src="image/current/" width=500>
+    <div id="status">
+    </div>
+    <script>
+      fetch("https://cityio.media.mit.edu/talkingdrums/status/")
+        .then((response)=>{return response.json()})
+        .then(json => {
+          // console.log(json);
+          let cnt_in = json["cnt_in"];
+          let cnt_out = json["cnt_out"];
+
+          // console.log(cnt_in);
+
+          let element = document.createElement("div");
+          element.innerHTML = "in: " + cnt_in + "<br> out: " + cnt_out;
+
+          console.log(element.innerHTML);
+
+          document.querySelector('#status').appendChild(element);
+          
+        })
+    </script>
   </body>
 </html>
